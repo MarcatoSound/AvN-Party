@@ -17,6 +17,10 @@ public class PartyManager {
 
     }
 
+    public void remove(Party party) {
+
+    }
+
     public Party get(Player player) {
         return partiesByPlayer.get(player.getUniqueId());
     }

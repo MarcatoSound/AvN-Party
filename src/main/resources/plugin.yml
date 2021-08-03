@@ -6,3 +6,5 @@ authors: [ MarcatoSound ]
 commands:
   party:
     description: The core party command.
+  p:
+    description: Shorthand for the party chat command.

@@ -1,5 +1,9 @@
 package net.playavalon.avnparty.player;
 
+import net.kyori.adventure.text.Component;
+import net.kyori.adventure.text.event.ClickEvent;
+import net.kyori.adventure.text.format.TextColor;
+import net.playavalon.avnparty.AvNParty;
 import net.playavalon.avnparty.Util;
 import net.playavalon.avnparty.party.Party;
 import org.bukkit.entity.Player;
@@ -63,13 +67,21 @@ public class AvalonPlayer {
         this.inviteFrom = inviteFrom;
         if (inviteFrom == null) return;
 
-        player.sendMessage(debugPrefix + Util.colorize("&6" + inviteFrom.getName() + " &binvited you to their party. (/party join)"));
+        Component debugPrefix = Component.text("[Party] ").color(TextColor.fromCSSHexString("#3aace0"));
+        Component message = Component.text(Util.colorize("&6" + inviteFrom.getName() + " &binvited you to their party. "));
+        Component joinParty = Component.text(Util.colorize("&e&l[JOIN]")).clickEvent(ClickEvent.clickEvent(ClickEvent.Action.RUN_COMMAND, "/party join"));
+
+        message = debugPrefix.append(message).append(joinParty);
+
+        player.sendMessage(message);
 
         new BukkitRunnable() {
             @Override
             public void run() {
 
-                player.sendMessage(debugPrefix + Util.colorize("&cThe party invite from &6" + inviteFrom.getName() + " &chas expired..."));
+                if (getInviteFrom() == null) return;
+
+                player.sendMessage(AvNParty.debugPrefix + Util.colorize("&cThe party invite from &6" + inviteFrom.getName() + " &chas expired..."));
                 setInviteFrom(null);
 
             }

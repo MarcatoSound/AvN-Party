@@ -9,6 +9,8 @@ import org.bukkit.event.EventHandler;
 import org.bukkit.event.EventPriority;
 import org.bukkit.event.Listener;
 import org.bukkit.event.player.PlayerJoinEvent;
+import org.bukkit.event.player.PlayerQuitEvent;
+import org.bukkit.scheduler.BukkitRunnable;
 
 import static net.playavalon.avnparty.AvNParty.plugin;
 
@@ -23,11 +25,33 @@ public class AvalonListener implements Listener {
         if (aPlayer != null) {
             // Update the existing AvalonPlayer
             aPlayer.setPlayer(player);
+
+            Party party = aPlayer.getParty();
+            if (party != null) {
+                party.updateScoreboard();
+            }
         } else {
             // Create a new AvalonPlayer and register it.
             aPlayer = new AvalonPlayer(player);
             plugin.players.put(aPlayer);
         }
+    }
+
+    @EventHandler
+    public void onPlayerQuit(PlayerQuitEvent event) {
+        Player player = event.getPlayer();
+
+        AvalonPlayer aPlayer = plugin.getAvalonPlayer(player);
+
+        new BukkitRunnable() {
+            @Override
+            public void run() {
+                Party party = aPlayer.getParty();
+                if (party != null) {
+                    party.updateScoreboard();
+                }
+            }
+        }.runTaskLater(plugin, 1);
     }
 
 
