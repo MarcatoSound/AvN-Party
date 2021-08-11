@@ -116,6 +116,21 @@ public final class AvNParty extends JavaPlugin {
                             return false;
                         }
 
+                        if (player.getName().equals(args[1])) {
+
+                            List<String> inviteSelfMsg = new ArrayList<>();
+                            inviteSelfMsg.add("You must be so lonely.");
+                            inviteSelfMsg.add("Come on, go make some friends!");
+                            inviteSelfMsg.add("No, you cannot invite yourself to a party.");
+                            inviteSelfMsg.add("I suppose you think you're terribly clever.");
+                            inviteSelfMsg.add("It's not a party if there's only one person.");
+                            inviteSelfMsg.add("It's tough being the hero, huh?");
+                            Random rand = new Random();
+
+                            player.sendMessage(debugPrefix + Util.colorize("&d" + inviteSelfMsg.get(rand.nextInt(inviteSelfMsg.size()))));
+                            return false;
+                        }
+
                         aPlayer = getAvalonPlayer(targetPlayer);
 
                         aPlayer.setInviteFrom(player);
@@ -231,7 +246,7 @@ public final class AvNParty extends JavaPlugin {
                             kickSelfMessages.add("Nice.");
                             Random rand = new Random();
 
-                            player.sendMessage(debugPrefix + Util.colorize("&d" + kickSelfMessages.get(rand.nextInt(kickSelfMessages.size()-1))));
+                            player.sendMessage(debugPrefix + Util.colorize("&d" + kickSelfMessages.get(rand.nextInt(kickSelfMessages.size()))));
                         }
                         break;
 
