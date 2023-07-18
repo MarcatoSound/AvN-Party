@@ -1,13 +1,15 @@
 package net.playavalon.avnparty;
 
+import net.playavalon.avnparty.listeners.AvalonListener;
+import net.playavalon.avnparty.listeners.TabCompletion;
 import net.playavalon.avnparty.party.Party;
 import net.playavalon.avnparty.party.PartyManager;
 import net.playavalon.avnparty.player.AvalonPlayer;
 import net.playavalon.avnparty.player.PlayerManager;
+import net.playavalon.avnparty.utility.Util;
 import org.bukkit.Bukkit;
 import org.bukkit.command.Command;
 import org.bukkit.command.CommandSender;
-import org.bukkit.configuration.file.FileConfiguration;
 import org.bukkit.entity.Player;
 import org.bukkit.plugin.java.JavaPlugin;
 import org.jetbrains.annotations.NotNull;
@@ -20,25 +22,28 @@ public final class AvNParty extends JavaPlugin {
 
     public static AvNParty plugin;
     public static String debugPrefix;
-    public FileConfiguration config;
+    //public FileConfiguration config;
 
     public PlayerManager players;
     public PartyManager parties;
+    public List<AvalonPlayer> spies;
 
     @Override
     public void onEnable() {
         // Plugin startup logic
         plugin = this;
-        saveDefaultConfig();
-        config = this.getConfig();
+        //saveDefaultConfig();
+        //config = this.getConfig();
         debugPrefix = Util.fullColor("{#3aace0}[Party] ");
 
         players = new PlayerManager();
         parties = new PartyManager();
+        spies = new ArrayList<>();
 
         Bukkit.getPluginManager().registerEvents(new AvalonListener(), this);
 
         getCommand("party").setTabCompleter(new TabCompletion());
+        getCommand("dparty").setTabCompleter(new TabCompletion());
 
     }
 
@@ -85,6 +90,7 @@ public final class AvNParty extends JavaPlugin {
                 break;
 
             // GENERAL COMMAND
+            case "dparty":
             case "party":
 
                 if (args.length == 0) {
@@ -94,7 +100,7 @@ public final class AvNParty extends JavaPlugin {
 
                     party = aPlayer.getParty();
                     if (party == null) {
-                        sender.sendMessage(Util.colorize(debugPrefix + "Avalon Parties - Version 1.0 Beta"));
+                        sender.sendMessage(Util.colorize(debugPrefix + "Dungeon Parties - Version 1.0"));
                         return false;
                     }
 
@@ -109,6 +115,7 @@ public final class AvNParty extends JavaPlugin {
                         if (!(sender instanceof Player)) return false;
 
                         player = (Player)sender;
+                        aPlayer = getAvalonPlayer(player);
 
                         targetPlayer = Bukkit.getPlayer(args[1]);
                         if (targetPlayer == null) {
@@ -131,9 +138,26 @@ public final class AvNParty extends JavaPlugin {
                             return false;
                         }
 
-                        aPlayer = getAvalonPlayer(targetPlayer);
+                        AvalonPlayer targetAPlayer = getAvalonPlayer(targetPlayer);
 
-                        aPlayer.setInviteFrom(player);
+                        if (targetAPlayer.getParty() != null) {
+                            player.sendMessage(debugPrefix + Util.colorize("&6" + args[1] + " &cis already in a party!"));
+                            return false;
+                        }
+
+                        Party currentParty = aPlayer.getParty();
+                        if (currentParty != null) {
+                            if (currentParty.getLeader() != aPlayer) {
+                                player.sendMessage(debugPrefix + Util.colorize("&cOnly the party leader can invite players!"));
+                                return false;
+                            }
+                            if (targetAPlayer.getParty() == currentParty) {
+                                player.sendMessage(debugPrefix + Util.colorize("&cThat player is already in your party!"));
+                                return false;
+                            }
+                        }
+
+                        targetAPlayer.setInviteFrom(player);
 
                         player.sendMessage(debugPrefix + Util.colorize("&bInvited &6" + targetPlayer.getName() + " &bto your party."));
 
@@ -144,9 +168,9 @@ public final class AvNParty extends JavaPlugin {
                         if (!(sender instanceof Player)) return false;
 
                         player = (Player)sender;
-                        aPlayer = getAvalonPlayer(player);
+                        targetAPlayer = getAvalonPlayer(player);
 
-                        Player inviteFrom = aPlayer.getInviteFrom();
+                        Player inviteFrom = targetAPlayer.getInviteFrom();
                         if (inviteFrom == null) {
                             player.sendMessage(debugPrefix + Util.colorize("&cYou aren't currently invited to a party."));
                             return false;
@@ -161,7 +185,7 @@ public final class AvNParty extends JavaPlugin {
                         if (party == null) party = new Party(inviteFrom);
 
                         party.addPlayer(player);
-                        aPlayer.setInviteFrom(null);
+                        targetAPlayer.setInviteFrom(null);
 
                         break;
 
@@ -170,9 +194,9 @@ public final class AvNParty extends JavaPlugin {
                         if (!(sender instanceof Player)) return false;
 
                         player = (Player)sender;
-                        aPlayer = getAvalonPlayer(player);
+                        targetAPlayer = getAvalonPlayer(player);
 
-                        party = aPlayer.getParty();
+                        party = targetAPlayer.getParty();
                         if (party == null) {
                             player.sendMessage(debugPrefix + Util.colorize("&cYou aren't currently in a party."));
                             return false;
@@ -189,22 +213,23 @@ public final class AvNParty extends JavaPlugin {
                         if (!(sender instanceof Player)) return false;
 
                         player = (Player)sender;
-                        aPlayer = getAvalonPlayer(player);
+                        targetAPlayer = getAvalonPlayer(player);
 
-                        party = aPlayer.getParty();
+                        party = targetAPlayer.getParty();
                         if (party == null) {
                             player.sendMessage(debugPrefix + Util.colorize("&cYou aren't currently in a party."));
                             return false;
                         }
 
-                        if (aPlayer != party.getLeader()) {
+                        if (targetAPlayer != party.getLeader()) {
                             player.sendMessage(debugPrefix + Util.colorize("&cOnly party leaders can change the leader."));
                             return false;
                         }
 
-                        targetPlayer = Bukkit.getPlayer(args[1]);
+                        AvalonPlayer newAPlayer = party.getPlayer(args[1]);
+                        targetPlayer = newAPlayer.getPlayer();
                         if (targetPlayer == null) {
-                            player.sendMessage(debugPrefix + Util.colorize("&cNo player found by name '&6" + args[1] + "&c'"));
+                            player.sendMessage(debugPrefix + Util.colorize("&cNo player found by name '&6" + args[1] + "&c' in the party."));
                             return false;
                         }
 
@@ -216,15 +241,15 @@ public final class AvNParty extends JavaPlugin {
                         if (!(sender instanceof Player)) return false;
 
                         player = (Player)sender;
-                        aPlayer = getAvalonPlayer(player);
+                        targetAPlayer = getAvalonPlayer(player);
 
-                        party = aPlayer.getParty();
+                        party = targetAPlayer.getParty();
                         if (party == null) {
                             player.sendMessage(debugPrefix + Util.colorize("&cYou aren't currently in a party."));
                             return false;
                         }
 
-                        if (aPlayer != party.getLeader()) {
+                        if (targetAPlayer != party.getLeader()) {
                             player.sendMessage(debugPrefix + Util.colorize("&cOnly party leaders can kick players."));
                             return false;
                         }
@@ -255,15 +280,15 @@ public final class AvNParty extends JavaPlugin {
                         if (!(sender instanceof Player)) return false;
 
                         player = (Player)sender;
-                        aPlayer = getAvalonPlayer(player);
+                        targetAPlayer = getAvalonPlayer(player);
 
-                        party = aPlayer.getParty();
+                        party = targetAPlayer.getParty();
                         if (party == null) {
                             player.sendMessage(debugPrefix + Util.colorize("&cYou aren't currently in a party."));
                             return false;
                         }
 
-                        if (aPlayer != party.getLeader()) {
+                        if (targetAPlayer != party.getLeader()) {
                             player.sendMessage(debugPrefix + Util.colorize("&cOnly party leaders can disband the party."));
                             return false;
                         }
@@ -274,18 +299,19 @@ public final class AvNParty extends JavaPlugin {
 
                     case "chat":
                         if (!(sender instanceof Player)) return false;
+                        if (!Util.hasPermission(sender, "dungeonparties.spy")) return false;
 
                         player = (Player)sender;
-                        aPlayer = getAvalonPlayer(player);
+                        targetAPlayer = getAvalonPlayer(player);
 
-                        party = aPlayer.getParty();
+                        party = targetAPlayer.getParty();
                         if (party == null) {
                             player.sendMessage(debugPrefix + Util.colorize("&cYou aren't currently in a party."));
                             return false;
                         }
 
                         if (args.length == 1) {
-                            aPlayer.togglePartyChat();
+                            targetAPlayer.togglePartyChat();
                             return false;
                         }
 
@@ -295,6 +321,22 @@ public final class AvNParty extends JavaPlugin {
                         }
 
                         party.sendChatMessage(player, message.toString());
+
+                        break;
+
+                    case "spy":
+                        if (!(sender instanceof Player)) return false;
+
+                        player = (Player)sender;
+                        aPlayer = getAvalonPlayer(player);
+
+                        if (!spies.contains(aPlayer)) {
+                            spies.add(aPlayer);
+                            player.sendMessage(debugPrefix + Util.colorize("&aYou are now spying on party messages from other players!"));
+                        } else {
+                            spies.remove(aPlayer);
+                            player.sendMessage(debugPrefix + Util.colorize("&cYou are no longer spying on party messages from other players."));
+                        }
 
                         break;
                 }

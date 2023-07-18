@@ -1,4 +1,4 @@
-package net.playavalon.avnparty;
+package net.playavalon.avnparty.utility;
 
 import net.md_5.bungee.api.ChatColor;
 import org.bukkit.Material;

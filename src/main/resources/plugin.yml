@@ -1,4 +1,4 @@
-name: AvNParty
+name: DungeonParties
 version: ${project.version}
 main: net.playavalon.avnparty.AvNParty
 api-version: 1.16
@@ -6,5 +6,7 @@ authors: [ MarcatoSound ]
 commands:
   party:
     description: The core party command.
+  dparty:
+    description: Alias for the core party command.
   p:
     description: Shorthand for the party chat command.

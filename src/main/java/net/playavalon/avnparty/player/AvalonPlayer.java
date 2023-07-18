@@ -1,11 +1,12 @@
 package net.playavalon.avnparty.player;
 
-import net.kyori.adventure.text.Component;
-import net.kyori.adventure.text.event.ClickEvent;
-import net.kyori.adventure.text.format.TextColor;
+import net.md_5.bungee.api.ChatColor;
+import net.md_5.bungee.api.ChatMessageType;
+import net.md_5.bungee.api.chat.ClickEvent;
+import net.md_5.bungee.api.chat.TextComponent;
 import net.playavalon.avnparty.AvNParty;
-import net.playavalon.avnparty.Util;
 import net.playavalon.avnparty.party.Party;
+import net.playavalon.avnparty.utility.Util;
 import org.bukkit.entity.Player;
 import org.bukkit.scheduler.BukkitRunnable;
 
@@ -67,13 +68,15 @@ public class AvalonPlayer {
         this.inviteFrom = inviteFrom;
         if (inviteFrom == null) return;
 
-        Component debugPrefix = Component.text("[Party] ").color(TextColor.fromCSSHexString("#3aace0"));
-        Component message = Component.text(Util.colorize("&6" + inviteFrom.getName() + " &binvited you to their party. "));
-        Component joinParty = Component.text(Util.colorize("&e&l[JOIN]")).clickEvent(ClickEvent.clickEvent(ClickEvent.Action.RUN_COMMAND, "/party join"));
+        TextComponent debugPrefix = new TextComponent(TextComponent.fromLegacyText(ChatColor.of("#3aace0") + "[Party] "));
+        TextComponent message = new TextComponent(TextComponent.fromLegacyText(Util.colorize("&6" + inviteFrom.getName() + " &binvited you to their party. ")));
+        TextComponent joinParty = new TextComponent(TextComponent.fromLegacyText(Util.colorize("&e&l[JOIN]")));
+        joinParty.setClickEvent(new ClickEvent(ClickEvent.Action.RUN_COMMAND, "/dparty join"));
 
-        message = debugPrefix.append(message).append(joinParty);
+        debugPrefix.addExtra(message);
+        debugPrefix.addExtra(joinParty);
 
-        player.sendMessage(message);
+        player.spigot().sendMessage(ChatMessageType.CHAT, debugPrefix);
 
         new BukkitRunnable() {
             @Override

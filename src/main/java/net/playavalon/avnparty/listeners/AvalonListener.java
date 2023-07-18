@@ -1,13 +1,12 @@
-package net.playavalon.avnparty;
+package net.playavalon.avnparty.listeners;
 
-import io.papermc.paper.event.player.AsyncChatEvent;
-import net.kyori.adventure.text.serializer.plain.PlainComponentSerializer;
 import net.playavalon.avnparty.party.Party;
 import net.playavalon.avnparty.player.AvalonPlayer;
 import org.bukkit.entity.Player;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.EventPriority;
 import org.bukkit.event.Listener;
+import org.bukkit.event.player.AsyncPlayerChatEvent;
 import org.bukkit.event.player.PlayerJoinEvent;
 import org.bukkit.event.player.PlayerQuitEvent;
 import org.bukkit.scheduler.BukkitRunnable;
@@ -28,6 +27,7 @@ public class AvalonListener implements Listener {
 
             Party party = aPlayer.getParty();
             if (party != null) {
+                party.setPlayerOnline(player, true);
                 party.updateScoreboard();
             }
         } else {
@@ -43,27 +43,38 @@ public class AvalonListener implements Listener {
 
         AvalonPlayer aPlayer = plugin.getAvalonPlayer(player);
 
-        new BukkitRunnable() {
-            @Override
-            public void run() {
-                Party party = aPlayer.getParty();
-                if (party != null) {
+        Party party = aPlayer.getParty();
+        if (party != null) {
+            new BukkitRunnable() {
+                @Override
+                public void run() {
+                    if (player.isOnline()) return;
+                    party.setPlayerOnline(player, false);
                     party.updateScoreboard();
                 }
-            }
-        }.runTaskLater(plugin, 1);
+            }.runTaskLaterAsynchronously(plugin, 1);
+
+            new BukkitRunnable() {
+                @Override
+                public void run() {
+                    if (player.isOnline()) return;
+                    party.partyMessage("&6" + player.getName() + " &cwas kicked for being offline too long!");
+                    party.removePlayer(player);
+                }
+            }.runTaskLaterAsynchronously(plugin, 6000);
+        }
     }
 
 
     @EventHandler(priority = EventPriority.LOW)
-    public void onPartyChat(AsyncChatEvent event) {
+    public void onPartyChat(AsyncPlayerChatEvent event) {
         Player player = event.getPlayer();
         AvalonPlayer aPlayer = plugin.getAvalonPlayer(player);
 
         if (!aPlayer.isPartyChat()) return;
         Party party = aPlayer.getParty();
 
-        String message = PlainComponentSerializer.plain().serialize(event.message());
+        String message = event.getMessage();
         party.sendChatMessage(player, message);
 
         event.setCancelled(true);

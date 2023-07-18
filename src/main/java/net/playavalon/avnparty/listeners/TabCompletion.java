@@ -1,7 +1,8 @@
-package net.playavalon.avnparty;
+package net.playavalon.avnparty.listeners;
 
 import net.playavalon.avnparty.party.Party;
 import net.playavalon.avnparty.player.AvalonPlayer;
+import net.playavalon.avnparty.utility.Util;
 import org.bukkit.Bukkit;
 import org.bukkit.command.Command;
 import org.bukkit.command.CommandSender;
@@ -18,7 +19,7 @@ import static net.playavalon.avnparty.AvNParty.plugin;
 public class TabCompletion implements TabCompleter {
     @Override
     public @Nullable List<String> onTabComplete(@NotNull CommandSender sender, @NotNull Command command, @NotNull String alias, @NotNull String[] args) {
-        if(!command.getName().equalsIgnoreCase("party")) return null;
+        if(!command.getName().equalsIgnoreCase("party") && !command.getName().equalsIgnoreCase("dparty")) return null;
         if(!(sender instanceof Player)) return null;
 
         Player player = (Player)sender;
@@ -38,6 +39,9 @@ public class TabCompletion implements TabCompleter {
                     list.add("disband");
                 }
             }
+            if (Util.hasPermissionSilent(player, "dungeonparties.spy")) {
+                list.add("spy");
+            }
             /*if (Util.hasPermissionSilent(player, "avni.admin")) {
                 //list.add("activepoints");
                 list.add("give ");
@@ -55,7 +59,7 @@ public class TabCompletion implements TabCompleter {
             switch (args[0]) {
                 case "invite":
                     for (Player listPlayer : Bukkit.getOnlinePlayers()) {
-                        list.add(listPlayer.getName());
+                        if (listPlayer.getName().contains(args[1])) list.add(listPlayer.getName());
                     }
                     break;
                 case "kick":
