@@ -299,7 +299,6 @@ public final class AvNParty extends JavaPlugin {
 
                     case "chat":
                         if (!(sender instanceof Player)) return false;
-                        if (!Util.hasPermission(sender, "dungeonparties.spy")) return false;
 
                         player = (Player)sender;
                         targetAPlayer = getAvalonPlayer(player);
@@ -326,6 +325,7 @@ public final class AvNParty extends JavaPlugin {
 
                     case "spy":
                         if (!(sender instanceof Player)) return false;
+                        if (!Util.hasPermission(sender, "dungeonparties.spy")) return false;
 
                         player = (Player)sender;
                         aPlayer = getAvalonPlayer(player);
